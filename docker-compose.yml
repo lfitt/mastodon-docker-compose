@@ -115,12 +115,13 @@ services:
       options:
         max-size: 150m           
 
+
   sidekiq:
     build: ../mastodon/
     image: tootsuite/mastodon
     restart: always
     env_file: .env.production
-    command: /etc/sidekiq/run_sidekiq.sh
+    command: bundle exec sidekiq -q "default" -c 8
     depends_on:
       - db
       - redis
@@ -129,13 +130,117 @@ services:
       - internal_network
     volumes:
       - /docker/data/public/system:/mastodon/public/system
-      - /docker/containers/live/run_sidekiq.sh:/etc/sidekiq/run_sidekiq.sh
     healthcheck:
       test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 6' || false"]
     logging:
       driver: json-file
       options:
-        max-size: 150m           
+        max-size: 50m           
+
+  sidekiq-ingress:
+    build: ../mastodon/
+    image: tootsuite/mastodon
+    restart: always
+    env_file: .env.production
+    command: bundle exec sidekiq -q "ingress" -c 16
+    depends_on:
+      - db
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - /docker/data/public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 6' || false"]
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m           
+
+  sidekiq-pull:
+    build: ../mastodon/
+    image: tootsuite/mastodon
+    restart: always
+    env_file: .env.production
+    command: bundle exec sidekiq -q "pull" -c 16
+    depends_on:
+      - db
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - /docker/data/public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 6' || false"]
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m     
+
+  sidekiq-mailers:
+    build: ../mastodon/
+    image: tootsuite/mastodon
+    restart: always
+    env_file: .env.production
+    command: bundle exec sidekiq -q "mailers" -c 4
+    depends_on:
+      - db
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - /docker/data/public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 6' || false"]
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m           
+
+  sidekiq-push:
+    build: ../mastodon/
+    image: tootsuite/mastodon
+    restart: always
+    env_file: .env.production
+    command: bundle exec sidekiq -q "push" -c 8
+    depends_on:
+      - db
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - /docker/data/public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 6' || false"]
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m  
+
+  sidekiq-scheduler:
+    build: ../mastodon/
+    image: tootsuite/mastodon
+    restart: always
+    env_file: .env.production
+    command: bundle exec sidekiq -q "scheduler" -c 8
+    depends_on:
+      - db
+      - redis
+    networks:
+      - external_network
+      - internal_network
+    volumes:
+      - /docker/data/public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "ps aux | grep '[s]idekiq\ 6' || false"]
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m  
 
   ## Uncomment to enable federation with tor instances along with adding the following ENV variables
   ## http_proxy=http://privoxy:8118
